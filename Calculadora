@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Calculadora Simples</title>
+<style>
+  /* Reset and base styles */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 600px;
+    max-width: 350px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #222;
+    user-select: none;
+  }
+
+  #calculator {
+    background: #ffffff;
+    border-radius: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 350px;
+    height: 580px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #display {
+    background: #202020;
+    color: #00ff9f;
+    font-size: 2.8rem;
+    height: 100px;
+    border-radius: 20px;
+    padding: 18px 25px;
+    text-align: right;
+    letter-spacing: 2px;
+    overflow-x: auto;
+    user-select: text;
+    box-shadow: inset 0 0 15px #00ff9f99;
+  }
+
+  #buttons {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 15px;
+    margin-top: 25px;
+  }
+
+  button {
+    background: #4a00e0;
+    border: none;
+    border-radius: 20px;
+    color: white;
+    font-size: 1.6rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 12px #3b00b0aa;
+    transition: background 0.3s ease, transform 0.1s ease;
+    user-select: none;
+  }
+  button:hover {
+    background: #7928ca;
+  }
+  button:active {
+    transform: scale(0.96);
+  }
+
+  button.operator {
+    background: #ff3c78;
+    box-shadow: 0 5px 12px #b72b56aa;
+  }
+  button.operator:hover {
+    background: #ff599e;
+  }
+
+  button.span-two {
+    grid-column: span 2;
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 360px) {
+    #display {
+      font-size: 2.2rem;
+      height: 90px;
+      padding: 16px 20px;
+    }
+    button {
+      font-size: 1.3rem;
+    }
+    #calculator {
+      height: 560px;
+      padding: 15px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div id="calculator" role="application" aria-label="Calculadora simples">
+    <div id="display" aria-live="polite" aria-atomic="true" aria-relevant="additions">0</div>
+    <div id="buttons" role="group" aria-label="Teclado da calculadora">
+      <button type="button" id="clear" aria-label="Limpar">C</button>
+      <button type="button" id="backspace" aria-label="Apagar último caractere">⌫</button>
+      <button type="button" class="operator" data-op="/" aria-label="Dividir">÷</button>
+      <button type="button" class="operator" data-op="*" aria-label="Multiplicar">×</button>
+
+      <button type="button" data-num="7">7</button>
+      <button type="button" data-num="8">8</button>
+      <button type="button" data-num="9">9</button>
+      <button type="button" class="operator" data-op="-" aria-label="Subtrair">−</button>
+
+      <button type="button" data-num="4">4</button>
+      <button type="button" data-num="5">5</button>
+      <button type="button" data-num="6">6</button>
+      <button type="button" class="operator" data-op="+" aria-label="Somar">+</button>
+
+      <button type="button" data-num="1">1</button>
+      <button type="button" data-num="2">2</button>
+      <button type="button" data-num="3">3</button>
+      <button type="button" id="equals" class="operator" aria-label="Igual">=</button>
+
+      <button type="button" data-num="0" class="span-two">0</button>
+      <button type="button" data-num=".">,</button>
+    </div>
+  </div>
+
+<script>
+  (function(){
+    const display = document.getElementById('display');
+    const buttons = document.getElementById('buttons');
+
+    let currentInput = '0';
+    let previousInput = null;
+    let operator = null;
+    let resetNext = false;
+
+    function updateDisplay() {
+      display.textContent = currentInput;
+    }
+
+    function clearAll() {
+      currentInput = '0';
+      previousInput = null;
+      operator = null;
+      resetNext = false;
+      updateDisplay();
+    }
+
+    function backspace() {
+      if (resetNext) {
+        currentInput = '0';
+        resetNext = false;
+        updateDisplay();
+        return;
+      }
+      if (currentInput.length === 1) {
+        currentInput = '0';
+      } else {
+        currentInput = currentInput.slice(0, -1);
+        if (currentInput === '' || currentInput === '-') {
+          currentInput = '0';
+        }
+      }
+      updateDisplay();
+    }
+
+    function appendNumber(num) {
+      if (resetNext) {
+        currentInput = num === '.' ? '0.' : num;
+        resetNext = false;
+        updateDisplay();
+        return;
+      }
+      if (num === ',') num = '.';
+      if (num === '.' && currentInput.includes('.')) return;
+
+      if (currentInput === '0') {
+        currentInput = num;
+      } else {
+        currentInput += num;
+      }
+      updateDisplay();
+    }
+
+    function compute() {
+      if (operator === null || previousInput === null) return;
+      let result;
+      const prev = parseFloat(previousInput);
+      const current = parseFloat(currentInput);
+      if (isNaN(prev) || isNaN(current)) return;
+      switch(operator) {
+        case '+': result = prev + current; break;
+        case '-': result = prev - current; break;
+        case '*': result = prev * current; break;
+        case '/': 
+          if (current === 0) {
+            alert('Erro: Divisão por zero não é permitida.');
+            clearAll();
+            return;
+          }
+          result = prev / current; 
+          break;
+        default: return;
+      }
+      currentInput = String(result);
+      operator = null;
+      previousInput = null;
+      resetNext = true;
+      updateDisplay();
+    }
+
+    function chooseOperator(op) {
+      if (operator !== null) {
+        compute();
+      }
+      operator = op;
+      previousInput = currentInput;
+      resetNext = true;
+    }
+
+    buttons.addEventListener('click', e => {
+      const target = e.target;
+      if (!target.matches('button')) return;
+
+      if (target.id === 'clear') {
+        clearAll();
+        return;
+      }
+      if (target.id === 'backspace') {
+        backspace();
+        return;
+      }
+      if (target.id === 'equals') {
+        compute();
+        return;
+      }
+      if (target.hasAttribute('data-op')) {
+        chooseOperator(target.getAttribute('data-op'));
+        return;
+      }
+      if (target.hasAttribute('data-num')) {
+        appendNumber(target.getAttribute('data-num'));
+        return;
+      }
+    });
+
+    // Keyboard support
+    window.addEventListener('keydown', e => {
+      const key = e.key;
+      if ((key >= '0' && key <= '9') || key === ',' || key === '.') {
+        e.preventDefault();
+        appendNumber(key === ',' ? '.' : key);
+        return;
+      }
+      if (key === '+' || key === '-' || key === '*' || key === '/') {
+        e.preventDefault();
+        chooseOperator(key);
+        return;
+      }
+      if (key === 'Enter' || key === '=') {
+        e.preventDefault();
+        compute();
+        return;
+      }
+      if (key === 'Backspace') {
+        e.preventDefault();
+        backspace();
+        return;
+      }
+      if (key.toLowerCase() === 'c') {
+        e.preventDefault();
+        clearAll();
+      }
+    });
+
+    clearAll();
+  })();
+</script>
+</body>
+</html>
+
